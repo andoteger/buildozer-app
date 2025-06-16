@@ -26,6 +26,7 @@ jobs:
           libsqlite3-dev libjpeg-dev zlib1g-dev \
           unzip openjdk-17-jdk \
           python3-pip python3-virtualenv wget git
+    
 
 
     - name: Install Buildozer
