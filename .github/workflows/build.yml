@@ -21,26 +21,32 @@ jobs:
     - name: ⚙️ Setup Android SDK
       uses: android-actions/setup-android@v2
 
-    - name: 🏗️ Build APK
+    - name: 🛠️ Install AIDL and Dependencies
       run: |
-        # Install system dependencies
-        sudo apt-get update
-        sudo apt-get install -y \
+        # Install required packages
+        sudo apt-get update && sudo apt-get install -y \
           build-essential ccache libffi-dev libssl-dev \
           libsqlite3-dev libjpeg-dev zlib1g-dev \
           python3-pip python3-virtualenv
 
-        # Install Buildozer
+        # Install specific Android packages (including AIDL)
+        yes | sdkmanager --install \
+          "platform-tools" \
+          "platforms;android-33" \
+          "build-tools;33.0.0" \
+          "cmdline-tools;latest"
+
+        # Add Android tools to PATH
+        echo "$ANDROID_HOME/build-tools/33.0.0" >> $GITHUB_PATH
+        echo "$ANDROID_HOME/platform-tools" >> $GITHUB_PATH
+        echo "$ANDROID_HOME/cmdline-tools/latest/bin" >> $GITHUB_PATH
+
+    - name: 🏗️ Build with Buildozer
+      run: |
         pip install --upgrade pip
         pip install buildozer cython
 
-        # Accept licenses (important!)
-        yes | sdkmanager --licenses
-
-        # Install specific Android packages
-        sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.0"
-
-        # Initialize Buildozer if needed
+        # Initialize if spec doesn't exist
         if [ ! -f buildozer.spec ]; then
           buildozer init
         fi
