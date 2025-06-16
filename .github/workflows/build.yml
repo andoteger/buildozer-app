@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout source code
+    - name: Checkout source
       uses: actions/checkout@v3
 
     - name: Setup Python
@@ -24,13 +24,27 @@ jobs:
         sudo apt install -y \
           build-essential ccache libffi-dev libssl-dev \
           libsqlite3-dev libjpeg-dev zlib1g-dev \
-          openjdk-17-jdk git zip unzip \
-          python3-pip python3-virtualenv
+          libncurses5 unzip openjdk-17-jdk \
+          python3-pip python3-virtualenv wget
 
     - name: Install Buildozer
       run: |
         pip install --upgrade pip
         pip install buildozer cython
+
+    - name: Install Android SDK + AIDL
+      run: |
+        mkdir -p $HOME/android-sdk/cmdline-tools
+        cd $HOME/android-sdk/cmdline-tools
+        wget https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O tools.zip
+        unzip tools.zip -d latest
+        export ANDROID_HOME=$HOME/android-sdk
+        export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH
+        yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_HOME --licenses
+        $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_HOME \
+          "platform-tools" \
+          "platforms;android-31" \
+          "build-tools;31.0.0"
 
     - name: Create buildozer.spec if missing
       run: |
@@ -38,7 +52,10 @@ jobs:
           buildozer init
         fi
 
-    - name: Build APK (Buildozer will auto-download SDK)
+    - name: Build APK
+      env:
+        ANDROID_HOME: ${{ github.workspace }}/android-sdk
+        PATH: ${{ github.workspace }}/android-sdk/cmdline-tools/latest/bin:${{ github.workspace }}/android-sdk/platform-tools:${{ env.PATH }}
       run: buildozer android debug
 
     - name: Upload APK to Artifacts
