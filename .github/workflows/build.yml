@@ -13,11 +13,17 @@ jobs:
     - name: 📦 Checkout source code
       uses: actions/checkout@v3
 
-    - name: ⚙️ Full Setup & Build APK
+    - name: ⚙️ Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+
+    - name: 🛠️ Build APK
       env:
         ANDROID_HOME: $HOME/android-sdk
+        ANDROID_SDK_ROOT: $HOME/android-sdk
       run: |
-        # 1. Install dependencies
+        # Install system dependencies
         sudo apt-get update
         sudo apt-get install -y \
           build-essential ccache libffi-dev libssl-dev \
@@ -25,44 +31,41 @@ jobs:
           openjdk-17-jdk wget zip unzip curl git \
           python3-pip python3-virtualenv
 
-        # 2. Cek git
-        echo "✅ Git version:" $(git --version)
-
-        # 3. Install buildozer & cython
+        # Install Buildozer and dependencies
         pip install --upgrade pip
         pip install buildozer cython
 
-        # 4. Setup Android SDK
+        # Setup Android SDK
         mkdir -p $ANDROID_HOME/cmdline-tools
         cd $ANDROID_HOME/cmdline-tools
         wget https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O tools.zip
-        unzip tools.zip -d tmp
-        mv tmp/cmdline-tools latest
+        unzip tools.zip
+        rm tools.zip
+        mv cmdline-tools latest
 
-        # 5. Tambahkan path Android SDK ke environment global
-        echo "$ANDROID_HOME/cmdline-tools/latest/bin" >> $GITHUB_PATH
-        echo "$ANDROID_HOME/platform-tools" >> $GITHUB_PATH
-
-        # 6. Install SDK dan terima license
-        sdkmanager --sdk_root=$ANDROID_HOME --licenses
-        sdkmanager --sdk_root=$ANDROID_HOME \
+        # Accept licenses and install Android components
+        yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_HOME --licenses
+        $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_HOME \
           "platform-tools" \
           "platforms;android-31" \
           "build-tools;31.0.0"
 
-        # 7. Kembali ke root repo
-        cd $GITHUB_WORKSPACE
+        # Add Android tools to PATH
+        echo "$ANDROID_HOME/cmdline-tools/latest/bin" >> $GITHUB_PATH
+        echo "$ANDROID_HOME/platform-tools" >> $GITHUB_PATH
+        echo "$ANDROID_HOME/build-tools/31.0.0" >> $GITHUB_PATH
 
-        # 8. Inisialisasi buildozer.spec jika belum ada
+        # Initialize Buildozer if spec file doesn't exist
+        cd $GITHUB_WORKSPACE
         if [ ! -f buildozer.spec ]; then
           buildozer init
         fi
 
-        # 9. Build APK
-        buildozer android debug
+        # Build the APK
+        buildozer -v android debug
 
-    - name: 📤 Upload APK
+    - name: 📤 Upload APK Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: my-kivy-app
+        name: app-apk
         path: bin/*.apk
