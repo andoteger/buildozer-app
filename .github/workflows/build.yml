@@ -10,63 +10,55 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout source
+    - name: 📦 Checkout source code
       uses: actions/checkout@v3
 
-    - name: Setup Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.10'
-
-    - name: Install dependencies (termasuk git)
+    - name: ⚙️ Full Setup & Build APK
+      env:
+        ANDROID_HOME: $HOME/android-sdk
       run: |
         sudo apt-get update
         sudo apt-get install -y \
           build-essential ccache libffi-dev libssl-dev \
           libsqlite3-dev libjpeg-dev zlib1g-dev \
-          openjdk-17-jdk wget zip unzip curl git python3-pip python3-virtualenv
+          openjdk-17-jdk wget zip unzip curl git \
+          python3-pip python3-virtualenv
 
-    - name: Verifikasi Git & Python
-      run: |
-        echo "Git path:" $(command -v git)
-        git --version
-        python3 --version
+        echo "✅ Git version:" $(git --version)
 
-    - name: Install Buildozer
-      run: |
+        # Install Buildozer & Cython
         pip install --upgrade pip
         pip install buildozer cython
 
-    - name: Install Android SDK + AIDL
-      run: |
-        export ANDROID_HOME=$HOME/android-sdk
+        # Setup Android SDK
         mkdir -p $ANDROID_HOME/cmdline-tools
         cd $ANDROID_HOME/cmdline-tools
         wget https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O tools.zip
         unzip tools.zip
         mv cmdline-tools tools
         mv tools latest
-        export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$PATH
+
+        export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH
+
         yes | sdkmanager --sdk_root=$ANDROID_HOME --licenses
         sdkmanager --sdk_root=$ANDROID_HOME \
           "platform-tools" \
           "platforms;android-31" \
           "build-tools;31.0.0"
 
-    - name: Create buildozer.spec (if missing)
-      run: |
+        # Kembali ke folder project
+        cd $GITHUB_WORKSPACE
+
+        # Inisialisasi buildozer.spec jika belum ada
         if [ ! -f buildozer.spec ]; then
           buildozer init
         fi
 
-    - name: Build APK
-      env:
-        ANDROID_HOME: $HOME/android-sdk
-        PATH: $HOME/android-sdk/cmdline-tools/latest/bin:$HOME/android-sdk/platform-tools:$PATH
-      run: buildozer android debug
+        # Build APK
+        buildozer android debug
 
-    - name: Upload APK
-      uses: actions/upload-artifact@v4
+    - name: 📤 Upload APK
+      uses: actions/upload-artifact@v3
       with:
-        name: myapp-apk
+        name: my-kivy-app
         path: bin/*.apk
