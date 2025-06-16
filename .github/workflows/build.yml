@@ -18,16 +18,13 @@ jobs:
       with:
         python-version: '3.10'
 
-    - name: Install dependencies
+    - name: Install dependencies (dengan git)
       run: |
-        sudo apt update
-        sudo apt install -y \
+        sudo apt-get update -y
+        sudo apt-get install -y git wget zip unzip \
           build-essential ccache libffi-dev libssl-dev \
           libsqlite3-dev libjpeg-dev zlib1g-dev \
-          unzip openjdk-17-jdk \
-          python3-pip python3-virtualenv wget git
-    
-
+          openjdk-17-jdk python3-pip python3-virtualenv
 
     - name: Install Buildozer
       run: |
