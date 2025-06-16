@@ -17,6 +17,7 @@ jobs:
       env:
         ANDROID_HOME: $HOME/android-sdk
       run: |
+        # 1. Install dependencies
         sudo apt-get update
         sudo apt-get install -y \
           build-essential ccache libffi-dev libssl-dev \
@@ -24,37 +25,37 @@ jobs:
           openjdk-17-jdk wget zip unzip curl git \
           python3-pip python3-virtualenv
 
+        # 2. Cek git
         echo "✅ Git version:" $(git --version)
 
-        # Install Buildozer & Cython
+        # 3. Install buildozer & cython
         pip install --upgrade pip
         pip install buildozer cython
 
-        # Setup Android SDK
+        # 4. Setup Android SDK (FIXED)
         mkdir -p $ANDROID_HOME/cmdline-tools
         cd $ANDROID_HOME/cmdline-tools
         wget https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O tools.zip
         unzip tools.zip -d tmp
         mv tmp/cmdline-tools latest
-        
-        export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$PATH
-        
+
+        export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH
+
         yes | sdkmanager --sdk_root=$ANDROID_HOME --licenses
         sdkmanager --sdk_root=$ANDROID_HOME \
           "platform-tools" \
           "platforms;android-31" \
           "build-tools;31.0.0"
 
-
-        # Kembali ke folder project
+        # 5. Kembali ke repo root
         cd $GITHUB_WORKSPACE
 
-        # Inisialisasi buildozer.spec jika belum ada
+        # 6. Inisialisasi buildozer.spec jika belum ada
         if [ ! -f buildozer.spec ]; then
           buildozer init
         fi
 
-        # Build APK
+        # 7. Build APK
         buildozer android debug
 
     - name: 📤 Upload APK
