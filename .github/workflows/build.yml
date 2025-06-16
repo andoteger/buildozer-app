@@ -11,26 +11,36 @@ jobs:
 
     steps:
     - name: Checkout source code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v3
 
     - name: Setup Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.10'
 
-    - name: Install dependencies
+    - name: Install system dependencies
       run: |
         sudo apt update
         sudo apt install -y \
           build-essential ccache libffi-dev libssl-dev \
           libsqlite3-dev libjpeg-dev zlib1g-dev \
           openjdk-17-jdk git zip unzip \
-          python3-pip python3-virtualenv
+          python3-pip python3-virtualenv \
+          wget
 
     - name: Install Buildozer
-      run: pip install buildozer cython
+      run: |
+        pip install --upgrade pip
+        pip install buildozer cython
 
-    - name: Generate buildozer.spec if not exists
+    - name: Install Android SDK Build Tools (AIDL)
+      run: |
+        mkdir -p ~/.android
+        echo '### sdkmanager config' > ~/.android/repositories.cfg
+        yes | sdkmanager --licenses || true
+        sdkmanager "build-tools;34.0.0" "platforms;android-34" "platform-tools"
+
+    - name: Create buildozer.spec if not exists
       run: |
         if [ ! -f buildozer.spec ]; then
           buildozer init
@@ -40,7 +50,7 @@ jobs:
       run: buildozer android debug
 
     - name: Upload APK to GitHub Artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v3
       with:
         name: myapp-apk
         path: bin/*.apk
