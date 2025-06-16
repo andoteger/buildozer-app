@@ -8,6 +8,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     env:
       ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
       ANDROID_HOME: /usr/local/lib/android/sdk
@@ -27,45 +28,52 @@ jobs:
         sudo apt-get install -y \
           build-essential ccache libffi-dev libssl-dev \
           libsqlite3-dev libjpeg-dev zlib1g-dev \
-          python3-pip python3-virtualenv
+          python3-pip python3-virtualenv \
+          unzip zip openjdk-17-jdk
 
-    - name: ⚙️ Setup Android Tools
+    - name: ⚡ Setup Android (Cached)
+      uses: android-actions/setup-android@v2
+      with:
+        ndk-version: '25.1.8937393'
+
+    - name: 🔄 Verify Network Connection
       run: |
-        # Accept licenses first
-        yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses
-        
-        # Install specific versions (critical for AIDL)
-        $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager \
-          "platform-tools" \
-          "platforms;android-33" \
-          "build-tools;33.0.0" \
-          "cmdline-tools;latest"
-
-        # Verify AIDL exists
-        ls $ANDROID_SDK_ROOT/build-tools/33.0.0/aidl
-        echo "✅ AIDL path: $ANDROID_SDK_ROOT/build-tools/33.0.0/aidl"
+        ping -c 3 google.com
+        curl -I https://dl.google.com
+        echo "✅ Network check completed"
 
     - name: 📦 Install Buildozer
       run: |
         pip install --upgrade pip
-        pip install buildozer cython
+        pip install buildozer cython==0.29.36
 
-    - name: 🏗️ Build APK
+    - name: 🛠️ Build APK
       run: |
-        # Initialize if needed
+        # Create default buildozer.spec if not exists
         if [ ! -f buildozer.spec ]; then
           buildozer init
         fi
 
-        # Explicitly set paths in spec file
-        echo "
-        android.sdk_path = $ANDROID_SDK_ROOT
-        android.ndk_path = $ANDROID_SDK_ROOT/ndk/25.1.8937393
+        # Apply critical fixes
+        echo "[buildozer]
+        log_level = 2
+        warn_on_root = 0
+        
+        [android]
+        sdk_path = $ANDROID_SDK_ROOT
+        ndk_path = $ANDROID_SDK_ROOT/ndk/25.1.8937393
+        android_ant = no
         " >> buildozer.spec
 
-        buildozer -v android debug
+        # Retry mechanism for network issues
+        for i in {1..3}; do
+          echo "Attempt $i/3"
+          buildozer -v android debug && break
+          sleep 30
+        done
 
     - name: 📤 Upload APK
+      if: success()
       uses: actions/upload-artifact@v4
       with:
         name: app-release
