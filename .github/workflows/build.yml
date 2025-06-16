@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: 📦 Checkout source code
+    - name: 📦 Checkout code
       uses: actions/checkout@v3
 
     - name: 🐍 Setup Python
@@ -18,10 +18,10 @@ jobs:
       with:
         python-version: '3.9'
 
-    - name: 🛠️ Build APK
-      env:
-        ANDROID_HOME: /usr/local/lib/android/sdk
-        ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+    - name: ⚙️ Setup Android SDK
+      uses: android-actions/setup-android@v2
+
+    - name: 🏗️ Build APK
       run: |
         # Install system dependencies
         sudo apt-get update
@@ -30,25 +30,26 @@ jobs:
           libsqlite3-dev libjpeg-dev zlib1g-dev \
           python3-pip python3-virtualenv
 
-        # Install Buildozer and dependencies
+        # Install Buildozer
         pip install --upgrade pip
         pip install buildozer cython
 
-        # Setup Android SDK (using existing setup in GitHub runner)
+        # Accept licenses (important!)
         yes | sdkmanager --licenses
-        sdkmanager --install "platform-tools" "platforms;android-33" "build-tools;33.0.0"
 
-        # Initialize Buildozer if spec file doesn't exist
-        cd $GITHUB_WORKSPACE
+        # Install specific Android packages
+        sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.0"
+
+        # Initialize Buildozer if needed
         if [ ! -f buildozer.spec ]; then
           buildozer init
         fi
 
-        # Build the APK
+        # Build with verbose output
         buildozer -v android debug
 
-    - name: 📤 Upload APK Artifact
+    - name: 📤 Upload APK
       uses: actions/upload-artifact@v4
       with:
-        name: app-apk
+        name: app-release
         path: bin/*.apk
