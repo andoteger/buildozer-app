@@ -32,32 +32,33 @@ jobs:
         pip install --upgrade pip
         pip install buildozer cython
 
-        # 4. Setup Android SDK (FIXED)
+        # 4. Setup Android SDK
         mkdir -p $ANDROID_HOME/cmdline-tools
         cd $ANDROID_HOME/cmdline-tools
         wget https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O tools.zip
         unzip tools.zip -d tmp
         mv tmp/cmdline-tools latest
 
-        # Tambahkan path ke environment GitHub Actions
+        # 5. Tambahkan path Android SDK ke environment global
         echo "$ANDROID_HOME/cmdline-tools/latest/bin" >> $GITHUB_PATH
         echo "$ANDROID_HOME/platform-tools" >> $GITHUB_PATH
 
-        yes | sdkmanager --sdk_root=$ANDROID_HOME --licenses
+        # 6. Install SDK dan terima license
+        sdkmanager --sdk_root=$ANDROID_HOME --licenses
         sdkmanager --sdk_root=$ANDROID_HOME \
           "platform-tools" \
           "platforms;android-31" \
           "build-tools;31.0.0"
 
-        # 5. Kembali ke repo root
+        # 7. Kembali ke root repo
         cd $GITHUB_WORKSPACE
 
-        # 6. Inisialisasi buildozer.spec jika belum ada
+        # 8. Inisialisasi buildozer.spec jika belum ada
         if [ ! -f buildozer.spec ]; then
           buildozer init
         fi
 
-        # 7. Build APK
+        # 9. Build APK
         buildozer android debug
 
     - name: 📤 Upload APK
