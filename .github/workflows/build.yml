@@ -18,14 +18,19 @@ jobs:
       with:
         python-version: '3.10'
 
-    - name: Install dependencies lengkap
+    - name: Install dependencies (termasuk git)
       run: |
-        sudo apt-get update -y
+        sudo apt-get update
         sudo apt-get install -y \
           build-essential ccache libffi-dev libssl-dev \
           libsqlite3-dev libjpeg-dev zlib1g-dev \
           openjdk-17-jdk wget zip unzip curl git python3-pip python3-virtualenv
 
+    - name: Verifikasi Git & Python
+      run: |
+        echo "Git path:" $(command -v git)
+        git --version
+        python3 --version
 
     - name: Install Buildozer
       run: |
@@ -48,8 +53,7 @@ jobs:
           "platforms;android-31" \
           "build-tools;31.0.0"
 
-
-    - name: Create buildozer.spec if missing
+    - name: Create buildozer.spec (if missing)
       run: |
         if [ ! -f buildozer.spec ]; then
           buildozer init
@@ -59,14 +63,10 @@ jobs:
       env:
         ANDROID_HOME: $HOME/android-sdk
         PATH: $HOME/android-sdk/cmdline-tools/latest/bin:$HOME/android-sdk/platform-tools:$PATH
-      run: |
-        echo "Git location:" $(which git)
-        git --version
-        buildozer android debug
+      run: buildozer android debug
 
-
-    - name: Upload APK to Artifacts
-      uses: actions/upload-artifact@v4
+    - name: Upload APK
+      uses: actions/upload-artifact@v3
       with:
         name: myapp-apk
         path: bin/*.apk
