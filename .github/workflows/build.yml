@@ -36,12 +36,6 @@ jobs:
       with:
         ndk-version: '25.1.8937393'
 
-    - name: 🔄 Verify Network Connection
-      run: |
-        ping -c 3 google.com
-        curl -I https://dl.google.com
-        echo "✅ Network check completed"
-
     - name: 📦 Install Buildozer
       run: |
         pip install --upgrade pip
