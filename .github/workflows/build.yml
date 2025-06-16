@@ -56,9 +56,13 @@ jobs:
 
     - name: Build APK
       env:
-        ANDROID_HOME: ${{ github.workspace }}/android-sdk
-        PATH: ${{ github.workspace }}/android-sdk/cmdline-tools/latest/bin:${{ github.workspace }}/android-sdk/platform-tools:${{ env.PATH }}
-      run: buildozer android debug
+        ANDROID_HOME: $HOME/android-sdk
+        PATH: $HOME/android-sdk/cmdline-tools/latest/bin:$HOME/android-sdk/platform-tools:$PATH
+      run: |
+        echo "Git location:" $(which git)
+        git --version
+        buildozer android debug
+
 
     - name: Upload APK to Artifacts
       uses: actions/upload-artifact@v4
