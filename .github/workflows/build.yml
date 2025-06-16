@@ -24,8 +24,9 @@ jobs:
         sudo apt install -y \
           build-essential ccache libffi-dev libssl-dev \
           libsqlite3-dev libjpeg-dev zlib1g-dev \
-          libncurses5 unzip openjdk-17-jdk \
+          unzip openjdk-17-jdk \
           python3-pip python3-virtualenv wget
+
 
     - name: Install Buildozer
       run: |
