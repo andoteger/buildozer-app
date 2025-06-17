@@ -41,7 +41,9 @@ jobs:
           curl \
           ccache \
           ninja-build \
-          lld
+          lld \
+          libxml2-dev \
+          libxslt-dev
 
       - name: Install dependensi Python
         run: |
@@ -50,40 +52,51 @@ jobs:
           pip install buildozer
           echo "~/.local/bin" >> $GITHUB_PATH
 
-      - name: Setup Android SDK dan NDK (Metode Aman)
+      - name: Setup Android SDK dan NDK (Clean Install)
         run: |
-          mkdir -p ~/.android
-          touch ~/.android/repositories.cfg
-          
-          # Gunakan tools yang sudah tersedia di runner
+          # Setup environment variables
           echo "ANDROID_HOME=/usr/local/lib/android/sdk" >> $GITHUB_ENV
           echo "ANDROID_SDK_ROOT=/usr/local/lib/android/sdk" >> $GITHUB_ENV
           
-          # Update PATH untuk Android tools
+          mkdir -p ~/.android
+          touch ~/.android/repositories.cfg
+          
+          # Clean existing cmdline-tools
+          rm -rf /usr/local/lib/android/sdk/cmdline-tools/latest/*
+          
+          # Download and install latest command line tools
+          wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
+          unzip -q commandlinetools-linux-*.zip -d cmdline-tools
+          mv cmdline-tools/cmdline-tools/* /usr/local/lib/android/sdk/cmdline-tools/latest/
+          rm -rf cmdline-tools commandlinetools-linux-*.zip
+          
+          # Add to PATH
           echo "/usr/local/lib/android/sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
           echo "/usr/local/lib/android/sdk/platform-tools" >> $GITHUB_PATH
           
           # Accept licenses
           yes | sdkmanager --licenses
           
-          # Install komponen yang diperlukan
+          # Install required components
           sdkmanager "platform-tools" "platforms;android-31" "build-tools;31.0.0"
           
-          # Gunakan NDK yang sudah terinstall
+          # Install specific NDK version
+          sdkmanager "ndk;25.2.9519653"
           echo "ANDROID_NDK_HOME=/usr/local/lib/android/sdk/ndk/25.2.9519653" >> $GITHUB_ENV
 
-      - name: Verifikasi Android Tools
+      - name: Konfigurasi Buildozer
         run: |
-          echo "Android SDK path: $ANDROID_HOME"
-          echo "Android NDK path: $ANDROID_NDK_HOME"
-          sdkmanager --list
+          buildozer init
+          # Update buildozer.spec
+          sed -i "s/^android.ndk = .*/android.ndk = 25.2.9519653/" buildozer.spec
+          sed -i "s/^android.sdk = .*/android.sdk = 31/" buildozer.spec
+          sed -i "s/^android.ndk_path = .*/android.ndk_path = \/usr\/local\/lib\/android\/sdk\/ndk\/25.2.9519653/" buildozer.spec
+          sed -i "s/^android.sdk_path = .*/android.sdk_path = \/usr\/local\/lib\/android\/sdk/" buildozer.spec
+          sed -i "s/^#android.accept_sdk_license = .*/android.accept_sdk_license = True/" buildozer.spec
+          sed -i "s/^requirements = .*/requirements = python3,kivy/" buildozer.spec
 
       - name: Build APK
         run: |
-          buildozer init
-          # Modifikasi buildozer.spec
-          sed -i "s/android.ndk = .*/android.ndk = 25.2.9519653/" buildozer.spec
-          sed -i "s/android.sdk = .*/android.sdk = 31/" buildozer.spec
           buildozer -v android debug
 
       - name: Upload APK
@@ -92,3 +105,4 @@ jobs:
         with:
           name: android-apk
           path: bin/*.apk
+          retention-days: 1
