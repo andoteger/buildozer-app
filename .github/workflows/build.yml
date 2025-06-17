@@ -37,7 +37,7 @@ jobs:
           libtinfo5 cmake \
           libffi-dev \
           libssl-dev \
-          pip3 install --user --upgrade Cython==0.29.33 virtualenv \
+          pip3 install --upgrade Cython==0.29.33 virtualenv \
           # the --user should be removed if you do this in a venv
 
           # add the following line at the end of your ~/.bashrc file
