@@ -13,5 +13,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
       
-      - name: Run Hello World
-        run: echo "Hello World from GitHub Actions!"
+      - name: Update & Upgrade System
+        run: |
+          sudo apt-get update -y
+          sudo apt-get upgrade -y
+
+      - name: Install Buildozer Dependencies
+        run: |
+          pip3 install --user --upgrade buildozer
