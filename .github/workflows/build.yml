@@ -1,4 +1,4 @@
-name: Build APK with Buildozer
+name: Build APK dengan Buildozer
 
 on:
   push:
@@ -6,27 +6,21 @@ on:
   workflow_dispatch:
 
 jobs:
-  hello-world:
+  build-apk:
     runs-on: ubuntu-latest
     
     steps:
-      - name: Checkout code
+      - name: Checkout kode
         uses: actions/checkout@v3
       
-      - name: Update & Upgrade System
-        run: |
-          sudo apt-get update -y
-          sudo apt-get upgrade -y
-
-      - name: Set up Python
+      - name: Setup Python 3.9
         uses: actions/setup-python@v4
         with:
-          python-version: '3.9'  # Versi Python yang didukung Buildozer
+          python-version: '3.9'
 
-      - name: Install Buildozer Dependencies
+      - name: Install dependensi sistem
         run: |
           sudo apt-get update -y
-          pip3 install --user --upgrade buildozer
           sudo apt-get install -y \
           git \
           zip \
@@ -39,29 +33,40 @@ jobs:
           zlib1g-dev \
           libncurses5-dev \
           libncursesw5-dev \
-          libtinfo6 \
+          libtinfo5 \
           cmake \
           libffi-dev \
           libssl-dev \
-      - name: install cyton and buildozer
+          build-essential \
+          curl \
+          ccache \
+          ninja-build \
+          lld
+
+      - name: Install dependensi Python
         run: |
           python -m pip install --upgrade pip
-          pip install Cython==0.29.33  # Versi spesifik untuk menghindari error
+          pip install Cython==0.29.33
           pip install buildozer
+          echo "~/.local/bin" >> $GITHUB_PATH
 
-          # add the following line at the end of your ~/.bashrc file
-          export PATH=$PATH:~/.local/bin/ 
+      - name: Setup Android SDK dan NDK
+        run: |
+          mkdir -p ~/.android
+          touch ~/.android/repositories.cfg
+          yes | sudo $ANDROID_HOME/tools/bin/sdkmanager --licenses
 
-      - name: build APK
+      - name: Build APK
         run: |
           buildozer init
-          echo "y" | buildozer -v android debug  # Auto-accept SDK licenses
+          # Modifikasi buildozer.spec jika diperlukan
+          sed -i "s/android.ndk = .*/android.ndk = 25b/" buildozer.spec
+          sed -i "s/android.sdk = .*/android.sdk = 31/" buildozer.spec
+          buildozer -v android debug
 
-      - name: Upload APK to Artifacts
+      - name: Upload APK
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: android-apk
-          if: success()
-          path: |
-            bin/*.apk
-            bin/*.apk.info
+          path: bin/*.apk
