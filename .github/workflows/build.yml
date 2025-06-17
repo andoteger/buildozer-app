@@ -18,7 +18,7 @@ jobs:
         with:
           python-version: '3.9'
 
-      - name: Install dependensi sistem
+      - name: Install dependensi sistem lengkap
         run: |
           sudo apt-get update -y
           sudo apt-get install -y \
@@ -28,6 +28,7 @@ jobs:
           openjdk-17-jdk \
           python3-pip \
           autoconf \
+          automake \
           libtool \
           pkg-config \
           zlib1g-dev \
@@ -43,7 +44,13 @@ jobs:
           ninja-build \
           lld \
           libxml2-dev \
-          libxslt-dev
+          libxslt-dev \
+          gettext \
+          texinfo \
+          help2man \
+          gperf \
+          bison \
+          flex
 
       - name: Install dependensi Python
         run: |
@@ -62,6 +69,7 @@ jobs:
           mkdir -p ~/.android
           touch ~/.android/repositories.cfg
           
+          # Install Command Line Tools
           cd $HOME
           wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
           unzip -q commandlinetools-linux-*.zip -d cmdline-tools
@@ -77,27 +85,34 @@ jobs:
           $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "ndk;25.2.9519653"
           echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/25.2.9519653" >> $GITHUB_ENV
 
-      - name: Konfigurasi Buildozer (Fixed sed commands)
+      - name: Konfigurasi Buildozer
         run: |
           buildozer init
-          # Escape special characters in paths for sed
-          NDK_PATH_ESC=$(echo "$ANDROID_HOME/ndk/25.2.9519653" | sed 's/\//\\\//g')
-          SDK_PATH_ESC=$(echo "$ANDROID_HOME" | sed 's/\//\\\//g')
           
-          # Update buildozer.spec using alternative sed delimiter
-          sed -i "s|^android.ndk = .*|android.ndk = 25.2.9519653|" buildozer.spec
-          sed -i "s|^android.sdk = .*|android.sdk = 31|" buildozer.spec
-          sed -i "s|^android.ndk_path = .*|android.ndk_path = $NDK_PATH_ESC|" buildozer.spec
-          sed -i "s|^android.sdk_path = .*|android.sdk_path = $SDK_PATH_ESC|" buildozer.spec
-          sed -i "s|^#android.accept_sdk_license = .*|android.accept_sdk_license = True|" buildozer.spec
-          sed -i "s|^requirements = .*|requirements = python3,kivy|" buildozer.spec
-          
-          # Print the modified spec file for verification
-          cat buildozer.spec
+          # Update buildozer.spec dengan config khusus
+          cat <<EOT > buildozer.spec
+[app]
+title = MyApplication
+package.name = myapp
+package.domain = org.test
+source.dir = .
+source.include_exts = py,png,jpg,kv,atlas
+version = 0.1
+requirements = python3,kivy
+android.ndk = 25.2.9519653
+android.sdk = 31
+android.ndk_path = $ANDROID_HOME/ndk/25.2.9519653
+android.sdk_path = $ANDROID_HOME
+android.accept_sdk_license = True
+android.arch = arm64-v8a,armeabi-v7a
+p4a.branch = develop
+android.permissions = INTERNET
+EOT
 
-      - name: Build APK
+      - name: Build APK dengan log verbose
         run: |
-          echo "y" | buildozer -v android debug
+          echo "y" | buildozer -v android debug 2>&1 | tee build.log
+          cat .buildozer/android/platform/build-*/build.log
 
       - name: Upload APK
         if: success()
@@ -106,3 +121,12 @@ jobs:
           name: android-apk
           path: bin/*.apk
           retention-days: 1
+
+      - name: Upload build log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: |
+            build.log
+            .buildozer/android/platform/build-*/build.log
