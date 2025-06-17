@@ -52,37 +52,44 @@ jobs:
           pip install buildozer
           echo "~/.local/bin" >> $GITHUB_PATH
 
-      - name: Setup Android SDK dan NDK (Clean Install)
+      - name: Setup Android SDK dan NDK
         run: |
           # Setup environment variables
-          echo "ANDROID_HOME=/usr/local/lib/android/sdk" >> $GITHUB_ENV
-          echo "ANDROID_SDK_ROOT=/usr/local/lib/android/sdk" >> $GITHUB_ENV
+          export ANDROID_HOME=$HOME/android-sdk
+          export ANDROID_SDK_ROOT=$ANDROID_HOME
+          echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT" >> $GITHUB_ENV
           
           mkdir -p ~/.android
           touch ~/.android/repositories.cfg
           
-          # Clean existing cmdline-tools
-          rm -rf /usr/local/lib/android/sdk/cmdline-tools/latest/*
-          
-          # Download and install latest command line tools
+          # Download and install command line tools
+          cd $HOME
           wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
           unzip -q commandlinetools-linux-*.zip -d cmdline-tools
-          mv cmdline-tools/cmdline-tools/* /usr/local/lib/android/sdk/cmdline-tools/latest/
+          mkdir -p $ANDROID_HOME/cmdline-tools/latest
+          mv cmdline-tools/cmdline-tools/* $ANDROID_HOME/cmdline-tools/latest/
           rm -rf cmdline-tools commandlinetools-linux-*.zip
           
           # Add to PATH
-          echo "/usr/local/lib/android/sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
-          echo "/usr/local/lib/android/sdk/platform-tools" >> $GITHUB_PATH
+          echo "$ANDROID_HOME/cmdline-tools/latest/bin" >> $GITHUB_PATH
+          echo "$ANDROID_HOME/platform-tools" >> $GITHUB_PATH
           
           # Accept licenses
-          yes | sdkmanager --licenses
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
           
           # Install required components
-          sdkmanager "platform-tools" "platforms;android-31" "build-tools;31.0.0"
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-31" "build-tools;31.0.0"
           
-          # Install specific NDK version
-          sdkmanager "ndk;25.2.9519653"
-          echo "ANDROID_NDK_HOME=/usr/local/lib/android/sdk/ndk/25.2.9519653" >> $GITHUB_ENV
+          # Install NDK
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "ndk;25.2.9519653"
+          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/25.2.9519653" >> $GITHUB_ENV
+
+      - name: Verifikasi instalasi Android
+        run: |
+          echo "Android SDK path: $ANDROID_HOME"
+          echo "Android NDK path: $ANDROID_NDK_HOME"
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --list
 
       - name: Konfigurasi Buildozer
         run: |
@@ -90,8 +97,8 @@ jobs:
           # Update buildozer.spec
           sed -i "s/^android.ndk = .*/android.ndk = 25.2.9519653/" buildozer.spec
           sed -i "s/^android.sdk = .*/android.sdk = 31/" buildozer.spec
-          sed -i "s/^android.ndk_path = .*/android.ndk_path = \/usr\/local\/lib\/android\/sdk\/ndk\/25.2.9519653/" buildozer.spec
-          sed -i "s/^android.sdk_path = .*/android.sdk_path = \/usr\/local\/lib\/android\/sdk/" buildozer.spec
+          sed -i "s/^android.ndk_path = .*/android.ndk_path = $ANDROID_HOME\/ndk\/25.2.9519653/" buildozer.spec
+          sed -i "s/^android.sdk_path = .*/android.sdk_path = $ANDROID_HOME/" buildozer.spec
           sed -i "s/^#android.accept_sdk_license = .*/android.accept_sdk_license = True/" buildozer.spec
           sed -i "s/^requirements = .*/requirements = python3,kivy/" buildozer.spec
 
