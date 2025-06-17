@@ -89,8 +89,12 @@ jobs:
         run: |
           buildozer init
           
-          # Update buildozer.spec dengan config khusus
-          cat <<EOT > buildozer.spec
+          # Pastikan variabel sudah terdefinisi
+          echo "ANDROID_HOME is set to: $ANDROID_HOME"
+          echo "ANDROID_NDK_HOME is set to: $ANDROID_NDK_HOME"
+          
+          # Gunakan single quote untuk EOT dan escape variabel
+          cat <<'EOT' > buildozer.spec
 [app]
 title = MyApplication
 package.name = myapp
@@ -108,6 +112,13 @@ android.arch = arm64-v8a,armeabi-v7a
 p4a.branch = develop
 android.permissions = INTERNET
 EOT
+
+    # Verifikasi file yang dibuat
+    echo "Isi buildozer.spec:"
+    cat buildozer.spec
+    
+    # Ganti placeholder dengan nilai aktual
+    sed -i "s|\$ANDROID_HOME|$ANDROID_HOME|g" buildozer.spec
 
       - name: Build APK dengan log verbose
         run: |
