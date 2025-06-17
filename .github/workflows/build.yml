@@ -55,7 +55,7 @@ jobs:
       - name: build APK
         run: |
           buildozer init
-          buildozer -v android debug
+          buildozer -v android debug -y
 
       - name: Upload APK to Artifacts
         uses: actions/upload-artifact@v4
