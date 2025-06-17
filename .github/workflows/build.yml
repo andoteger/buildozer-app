@@ -49,17 +49,19 @@ jobs:
         # Force create bin directory
         mkdir -p bin
 
-        # Update buildozer.spec with critical settings
-        echo "[buildozer]
-        log_level = 2
-        warn_on_root = 0
-        
-        [android]
-        sdk_path = $ANDROID_SDK_ROOT
-        ndk_path = $ANDROID_SDK_ROOT/ndk/25.1.8937393
-        p4a_dir = $HOME/.local/lib/python3.9/site-packages/pythonforandroid
-        android_ant = no
-        " >> buildozer.spec
+        # Only append settings if they don't already exist
+        if ! grep -q "\[buildozer\]" buildozer.spec; then
+          echo "[buildozer]
+log_level = 2
+warn_on_root = 0
+
+[android]
+sdk_path = $ANDROID_SDK_ROOT
+ndk_path = $ANDROID_SDK_ROOT/ndk/25.1.8937393
+p4a_dir = $HOME/.local/lib/python3.9/site-packages/pythonforandroid
+android_ant = no
+" >> buildozer.spec
+        fi
 
     - name: 🔥 Build APK (with error handling)
       run: |
