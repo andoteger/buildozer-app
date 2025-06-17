@@ -54,9 +54,7 @@ jobs:
 
       - name: build APK
         run: |
-          buildozer init
           ~/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager "build-tools;29.0.0"
-          buildozer -v android debug -y
 
       - name: Upload APK to Artifacts
         uses: actions/upload-artifact@v4
