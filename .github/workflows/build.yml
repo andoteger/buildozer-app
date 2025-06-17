@@ -8,7 +8,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     env:
       ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
       ANDROID_HOME: /usr/local/lib/android/sdk
@@ -22,7 +22,7 @@ jobs:
       with:
         python-version: '3.9'
 
-    - name: 🔧 Install System Dependencies
+    - name: 🔧 Install Dependencies
       run: |
         sudo apt-get update
         sudo apt-get install -y \
@@ -31,24 +31,25 @@ jobs:
           python3-pip python3-virtualenv \
           unzip zip openjdk-17-jdk
 
-    - name: ⚡ Setup Android (Cached)
+    - name: ⚡ Setup Android
       uses: android-actions/setup-android@v2
-      with:
-        ndk-version: '25.1.8937393'
 
     - name: 📦 Install Buildozer
       run: |
         pip install --upgrade pip
         pip install buildozer cython==0.29.36
 
-    - name: 🛠️ Build APK
+    - name: 🛠️ Configure Buildozer
       run: |
-        # Create default buildozer.spec if not exists
+        # Initialize if not exists
         if [ ! -f buildozer.spec ]; then
           buildozer init
         fi
 
-        # Apply critical fixes
+        # Force create bin directory
+        mkdir -p bin
+
+        # Update buildozer.spec with critical settings
         echo "[buildozer]
         log_level = 2
         warn_on_root = 0
@@ -56,15 +57,34 @@ jobs:
         [android]
         sdk_path = $ANDROID_SDK_ROOT
         ndk_path = $ANDROID_SDK_ROOT/ndk/25.1.8937393
+        p4a_dir = $HOME/.local/lib/python3.9/site-packages/pythonforandroid
         android_ant = no
         " >> buildozer.spec
 
-        # Retry mechanism for network issues
-        for i in {1..3}; do
-          echo "Attempt $i/3"
-          buildozer -v android debug && break
-          sleep 30
-        done
+    - name: 🔥 Build APK (with error handling)
+      run: |
+        set -e  # Exit immediately if any command fails
+        
+        # Clean previous builds
+        rm -rf bin/*.apk || true
+        
+        # Build with log capture
+        buildozer -v android debug > build.log 2>&1 || {
+          echo "❌ Build failed! Showing logs:"
+          cat build.log
+          exit 1
+        }
+        
+        # Verify APK exists
+        if [ ! -f bin/*.apk ]; then
+          echo "❌ No APK found in bin directory!"
+          echo "Directory contents:"
+          ls -la bin/
+          exit 1
+        fi
+        
+        echo "✅ APK successfully built:"
+        ls -la bin/*.apk
 
     - name: 📤 Upload APK
       if: success()
@@ -72,3 +92,10 @@ jobs:
       with:
         name: app-release
         path: bin/*.apk
+
+    - name: 📝 Upload Build Logs
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-logs
+        path: build.log
