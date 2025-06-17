@@ -57,25 +57,25 @@ jobs:
         fi
 
         cat <<EOF > buildozer.spec
-[app]
-title = MyApp
-package.name = myapp
-package.domain = org.test
-source.dir = .
-source.include_exts = py,png,jpg,kv,atlas
-version = 0.1
-requirements = python3,kivy
-
-[buildozer]
-log_level = 2
-warn_on_root = 0
-
-[android]
-sdk_path = $ANDROID_SDK_ROOT
-ndk_path = $ANDROID_SDK_ROOT/ndk/25.1.8937393
-p4a_dir = $HOME/.local/lib/python3.9/site-packages/pythonforandroid
-android_ant = no
-EOF
+    [app]
+    title = MyApp
+    package.name = myapp
+    package.domain = org.test
+    source.dir = .
+    source.include_exts = py,png,jpg,kv,atlas
+    version = 0.1
+    requirements = python3,kivy
+    
+    [buildozer]
+    log_level = 2
+    warn_on_root = 0
+    
+    [android]
+    sdk_path = $ANDROID_SDK_ROOT
+    ndk_path = $ANDROID_SDK_ROOT/ndk/25.1.8937393
+    p4a_dir = $HOME/.local/lib/python3.9/site-packages/pythonforandroid
+    android_ant = no
+    EOF
 
     - name: 🏗️ Build APK
       run: |
