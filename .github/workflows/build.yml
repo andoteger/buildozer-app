@@ -85,33 +85,27 @@ jobs:
           $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "ndk;25.2.9519653"
           echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/25.2.9519653" >> $GITHUB_ENV
 
-      - name: Konfigurasi Buildozer
+      - name: Konfigurasi Buildozer (Alternatif)
         run: |
           buildozer init
-          
-          # Pastikan variabel sudah terdefinisi
-          echo "ANDROID_HOME is set to: $ANDROID_HOME"
-          echo "ANDROID_NDK_HOME is set to: $ANDROID_NDK_HOME"
-          
-          # Gunakan single quote untuk EOT dan escape variabel
-          cat <<'EOT' > buildozer.spec
-[app]
-title = MyApplication
-package.name = myapp
-package.domain = org.test
-source.dir = .
-source.include_exts = py,png,jpg,kv,atlas
-version = 0.1
-requirements = python3,kivy
-android.ndk = 25.2.9519653
-android.sdk = 31
-android.ndk_path = $ANDROID_HOME/ndk/25.2.9519653
-android.sdk_path = $ANDROID_HOME
-android.accept_sdk_license = True
-android.arch = arm64-v8a,armeabi-v7a
-p4a.branch = develop
-android.permissions = INTERNET
-EOT
+          cat > buildozer.spec <<EOF
+      [app]
+      title = MyApplication
+      package.name = myapp
+      package.domain = org.test
+      source.dir = .
+      source.include_exts = py,png,jpg,kv,atlas
+      version = 0.1
+      requirements = python3,kivy
+      android.ndk = 25.2.9519653
+      android.sdk = 31
+      android.ndk_path = $ANDROID_HOME/ndk/25.2.9519653
+      android.sdk_path = $ANDROID_HOME
+      android.accept_sdk_license = True
+      android.arch = arm64-v8a,armeabi-v7a
+      p4a.branch = develop
+      android.permissions = INTERNET
+      EOF
 
     # Verifikasi file yang dibuat
     echo "Isi buildozer.spec:"
