@@ -18,10 +18,16 @@ jobs:
           sudo apt-get update -y
           sudo apt-get upgrade -y
 
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'  # Versi Python yang didukung Buildozer
+
       - name: Install Buildozer Dependencies
         run: |
+          sudo apt-get update -y
           pip3 install --user --upgrade buildozer
-          sudo apt install -y \
+          sudo apt-get install -y \
           git \
           zip \
           unzip \
@@ -33,12 +39,15 @@ jobs:
           zlib1g-dev \
           libncurses5-dev \
           libncursesw5-dev \
-          libtinfo5 \
+          libtinfo6 \
           cmake \
           libffi-dev \
           libssl-dev \
-          pip3 install --upgrade Cython==0.29.33 virtualenv \
-          # the --user should be removed if you do this in a venv
+      - name: install cyton and buildozer
+        run: |
+          python -m pip install --upgrade pip
+          pip install Cython==0.29.33  # Versi spesifik untuk menghindari error
+          pip install buildozer
 
           # add the following line at the end of your ~/.bashrc file
           export PATH=$PATH:~/.local/bin/ 
