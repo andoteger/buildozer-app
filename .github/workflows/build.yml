@@ -33,7 +33,7 @@ jobs:
           zlib1g-dev \
           libncurses5-dev \
           libncursesw5-dev \
-          libtinfo6 \
+          libtinfo5 \
           cmake \
           libffi-dev \
           libssl-dev \
@@ -50,31 +50,33 @@ jobs:
           pip install buildozer
           echo "~/.local/bin" >> $GITHUB_PATH
 
-      - name: Setup Android SDK dan NDK
+      - name: Setup Android SDK dan NDK (Metode Aman)
         run: |
           mkdir -p ~/.android
           touch ~/.android/repositories.cfg
           
-          # Download dan setup Android Command Line Tools
-          wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
-          unzip commandlinetools-linux-*.zip -d cmdline-tools
-          mkdir -p $ANDROID_HOME/cmdline-tools/latest
-          mv cmdline-tools/cmdline-tools/* $ANDROID_HOME/cmdline-tools/latest
-          rm -rf cmdline-tools commandlinetools-linux-*.zip
+          # Gunakan tools yang sudah tersedia di runner
+          echo "ANDROID_HOME=/usr/local/lib/android/sdk" >> $GITHUB_ENV
+          echo "ANDROID_SDK_ROOT=/usr/local/lib/android/sdk" >> $GITHUB_ENV
           
-          # Tambahkan ke PATH
-          echo "$ANDROID_HOME/cmdline-tools/latest/bin" >> $GITHUB_PATH
-          echo "$ANDROID_HOME/platform-tools" >> $GITHUB_PATH
+          # Update PATH untuk Android tools
+          echo "/usr/local/lib/android/sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
+          echo "/usr/local/lib/android/sdk/platform-tools" >> $GITHUB_PATH
           
           # Accept licenses
-          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
+          yes | sdkmanager --licenses
           
-          # Install platform dan build tools
-          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-31" "build-tools;31.0.0"
+          # Install komponen yang diperlukan
+          sdkmanager "platform-tools" "platforms;android-31" "build-tools;31.0.0"
           
-          # Set NDK version
-          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "ndk;25.2.9519653"
-          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/25.2.9519653" >> $GITHUB_ENV
+          # Gunakan NDK yang sudah terinstall
+          echo "ANDROID_NDK_HOME=/usr/local/lib/android/sdk/ndk/25.2.9519653" >> $GITHUB_ENV
+
+      - name: Verifikasi Android Tools
+        run: |
+          echo "Android SDK path: $ANDROID_HOME"
+          echo "Android NDK path: $ANDROID_NDK_HOME"
+          sdkmanager --list
 
       - name: Build APK
         run: |
