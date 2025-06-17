@@ -6,64 +6,12 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  hello-world:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
-    env:
-      ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
-      ANDROID_HOME: /usr/local/lib/android/sdk
-
+    
     steps:
-    - name: 📦 Checkout code
-      uses: actions/checkout@v3
-
-    - name: 🐍 Setup Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.9'
-
-    - name: 🔧 Install System Dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y \
-          build-essential ccache libffi-dev libssl-dev \
-          libsqlite3-dev libjpeg-dev zlib1g-dev \
-          python3-pip python3-virtualenv \
-          unzip zip openjdk-17-jdk
-    - name: ⚡ Setup Android (Cached)
-      uses: android-actions/setup-android@v2
-      with:
-        ndk-version: '25.1.8937393'
-
-    - name: 📦 Install Buildozer
-      run: |
-        pip install --upgrade pip
-        pip install buildozer cython==0.29.36
-    - name: 🛠️ Build APK
-      run: |
-        # Create default buildozer.spec if not exists
-        if [ ! -f buildozer.spec ]; then
-          buildozer init
-        fi
-        # Apply critical fixes
-        echo "[buildozer]
-        log_level = 2
-        warn_on_root = 0
-        
-        [android]
-        sdk_path = $ANDROID_SDK_ROOT
-        ndk_path = $ANDROID_SDK_ROOT/ndk/25.1.8937393
-        android_ant = no
-        " >> buildozer.spec
-        # Retry mechanism for network issues
-        for i in {1..3}; do
-          echo "Attempt $i/3"
-          buildozer -v android debug && break
-          sleep 30
-        done
-    - name: 📤 Upload APK
-      if: success()
-      uses: actions/upload-artifact@v4
-      with:
-        name: app-release
-        path: bin/*.apk
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Run Hello World
+        run: echo "Hello World from GitHub Actions!"
