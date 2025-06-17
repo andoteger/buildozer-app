@@ -54,7 +54,8 @@ jobs:
 
       - name: build APK
         run: |
-          ~/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager "build-tools;29.0.0"
+          buildozer init
+          echo "y" | buildozer -v android debug  # Auto-accept SDK licenses
 
       - name: Upload APK to Artifacts
         uses: actions/upload-artifact@v4
