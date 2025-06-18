@@ -64,7 +64,7 @@ jobs:
         run: |
           mkdir myapp && cd myapp
           buildozer init
-          buildozer -v android debug
+          echo "y" | buildozer -v android debug
 
       - name: Upload APK
         if: success()
