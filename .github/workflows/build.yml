@@ -64,9 +64,6 @@ jobs:
         run: |
           mkdir myapp && cd myapp
           buildozer init
-          
-      - name: build apk
-        run: |
           buildozer -v android debug
 
       - name: Upload APK
