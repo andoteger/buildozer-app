@@ -63,6 +63,10 @@ jobs:
       - name: configurasi buildozer.conf
         run: |
           mkdir myapp && cd myapp
+          sudo apt update
+          sudo apt install -y libtool automake autoconf
+          make clean
+          autoreconf -ivf  # Generate ulang script configure
           buildozer init
           echo "y" | buildozer -v android debug
 
