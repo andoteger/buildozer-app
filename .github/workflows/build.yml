@@ -1,39 +1,36 @@
-name: Android Build
+name: Build Android APK with Buildozer
 
-on: [push, pull_request]
+on:
+  push:
+    branches: [ main ]  # Ganti dengan branch Anda
+  pull_request:
+    branches: [ main ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-    
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.10'
-    
-    - name: Install dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y git zip unzip python3-pip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo6 cmake libffi-dev libssl-dev
-        pip install --user buildozer cython==0.29.19 virtualenv
-    
-    - name: Set up Buildozer
-      run: |
-        echo "$HOME/.local/bin" >> $GITHUB_PATH
-        buildozer init
-        # Jika perlu modifikasi buildozer.spec secara otomatis:
-        sed -i 's/android.sdk = .*/android.sdk = 24/' buildozer.spec
-        sed -i 's/android.ndk = .*/android.ndk = 23b/' buildozer.spec
-    
-    - name: Build APK
-      run: |
-        buildozer -v android debug
-        ls -la bin/
-    
-    - name: Upload APK
-      uses: actions/upload-artifact@v4
-      with:
-        name: android-apk
-        path: bin/*.apk
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.8'
+
+      - name: Install Buildozer and dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y git zip unzip openjdk-17-jdk python3-pip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libtinfo5
+          pip install buildozer cython==0.29.36 virtualenv
+
+      - name: Run Buildozer
+        run: |
+          buildozer -v android debug
+          ls -la bin/
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v3
+        with:
+          name: app-debug
+          path: bin/*.apk
