@@ -1,47 +1,39 @@
-name: Build APK with Buildozer
+name: Android Build
 
-on:
-  push:
-    branches: [ "main" ]
+on: [push, pull_request]
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.8'
-
-      - name: Install system dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            git zip unzip openjdk-17-jdk \
-            python3-pip autoconf libtool pkg-config \
-            zlib1g-dev libncurses5-dev libtinfo6 \
-            cython3  # Tambahkan ini
-
-      - name: Install Python dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install buildozer cython
-
-      - name: Generate buildozer.spec
-        run: |
-          buildozer init --non-interactive
-          cat buildozer.spec
-
-      - name: Build APK
-        run: |
-          echo 'y' | buildozer android debug
-          ls -lh bin/*.apk
-
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: app-debug
-          path: bin/*.apk
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+    
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y git zip unzip python3-pip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo6 cmake libffi-dev libssl-dev
+        pip install --user buildozer cython==0.29.19 virtualenv
+    
+    - name: Set up Buildozer
+      run: |
+        echo "$HOME/.local/bin" >> $GITHUB_PATH
+        buildozer init
+        # Jika perlu modifikasi buildozer.spec secara otomatis:
+        sed -i 's/android.sdk = .*/android.sdk = 24/' buildozer.spec
+        sed -i 's/android.ndk = .*/android.ndk = 23b/' buildozer.spec
+    
+    - name: Build APK
+      run: |
+        buildozer -v android debug
+        ls -la bin/
+    
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: android-apk
+        path: bin/*.apk
