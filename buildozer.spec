@@ -15,6 +15,11 @@ android.ndk = 23b
 android.sdk = 34
 android.arch = arm64-v8a
 
+# Di bagian [app]
+android.build_tool = gradle
+android.gradle_dependencies = 'com.android.tools.build:gradle:7.2.2'
+
+
 # Konfigurasi build
 source.dir = .
 source.include_exts = py,png,jpg,kv,ttf,json
