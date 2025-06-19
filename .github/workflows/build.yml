@@ -21,13 +21,14 @@ jobs:
       - name: Install Buildozer and dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y git zip unzip openjdk-17-jdk python3-pip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libtinfo6
+          sudo apt-get install -y git zip unzip openjdk-17-jdk python3-pip autoconf automake libtool pkg-config zlib1g-dev libncurses5-dev libtinfo6
           pip install buildozer cython==0.29.36 virtualenv
           
-      - name: Install dependencies
+      - name: Run autoreconf (if needed)
         run: |
-          sudo apt-get update
-          sudo apt-get install -y libtool autoconf automake pkg-config
+          if [ -f "configure.ac" ]; then
+            autoreconf -fvi
+          fi
 
       - name: Run Buildozer
         run: |
